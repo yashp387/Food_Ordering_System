@@ -111,7 +111,7 @@ router.delete("/:id/profile", authMiddleware, async (req, res) => {
 
         // Ensure the only authenticated user can delete their profile (or admin)
         if(req.user.id !== userId && req.user.role !== "admin") {
-            return res.status(403).json({msg: "Unathorized, You can not delete this profile"});
+            return res.status(403).json({msg: "Unauthorized, You can not delete this profile"});
         }
 
         // Delete user profile

@@ -9,8 +9,10 @@ const PORT = process.env.PORT || 3000;
 
 // Importing the routes
 const userRoutes = require("./routes/userRoutes");
+const restaurantRoutes = require("./routes/restaurantRoutes");
 
 // Use the routes
 app.use("/user", userRoutes);
+app.use("/restaurant", restaurantRoutes);
 
 app.listen(PORT, () => console.log(`Listening on server ${PORT}`));
