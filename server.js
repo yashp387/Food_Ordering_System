@@ -11,10 +11,12 @@ const PORT = process.env.PORT || 3000;
 const userRoutes = require("./routes/userRoutes");
 const restaurantRoutes = require("./routes/restaurantRoutes");
 const menuItemRoutes = require("./routes/menuItemsRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 
 // Use the routes
 app.use("/user", userRoutes);
 app.use("/restaurant", restaurantRoutes);
 app.use("/menuItem", menuItemRoutes);
+app.use("/cart", cartRoutes);
 
 app.listen(PORT, () => console.log(`Listening on server ${PORT}`));
