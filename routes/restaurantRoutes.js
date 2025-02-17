@@ -147,7 +147,7 @@ router.post("/:id/menu", authMiddleware, async (req, res) => {
 router.get("/:id/menu", async (req, res) => {
     try {
         const restaurantId = req.params.id;
-        console.log("Restaurant ID is ", restaurantId);
+        // console.log("Restaurant ID is ", restaurantId);
 
         // Validate if the provided ID is a valis mongoDB objectId
         if(!mongoose.Types.ObjectId.isValid(restaurantId)) {
