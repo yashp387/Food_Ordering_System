@@ -31,6 +31,11 @@ const restaurantSchema = new mongoose.Schema({
         enum: ["open", "closed"],
         default: "open",
     },
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    }
 }, { timestamps: true });
 
 const Restaurant = mongoose.model("Restaurant", restaurantSchema);

@@ -107,7 +107,7 @@ router.get("/:id", async(req, res) => {
 });
 
 
-// Add menu items for a restaurants
+// Add menu items for a restaurant  (only restaurant owner)
 router.post("/:id/menu", authMiddleware, async (req, res) => {
     try {
         const restaurantId = req.params.id;
@@ -123,9 +123,9 @@ router.post("/:id/menu", authMiddleware, async (req, res) => {
         
         if(!restaurant) return res.status(404).json({msg: "Restaurant not found"});
         
-        // Ensure the only admin can add menu item in a restaurant
-        if(req.user.role !== "admin") {
-            return res.status(403).json({msg: "Unauthorized, Only admin can add menu item"});
+        // Ensure only restaurant owner can add menu items
+        if(restaurant.owner.toString() !== req.user.id) {
+            return res.status(403).json({msg: "Unauthorized, Only restaurant owner can add menu items"});
         }
         
         // Create new menu item
@@ -140,7 +140,7 @@ router.post("/:id/menu", authMiddleware, async (req, res) => {
         console.log("Error adding menu items in restaurants",error);
         res.status(500).json({msg: "Internal server error"});
     }
-})
+});
 
 
 // Get restaurant menu
