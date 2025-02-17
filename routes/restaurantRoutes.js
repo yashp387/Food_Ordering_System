@@ -21,7 +21,7 @@ router.post("/", authMiddleware, async (req, res) => {
         // Create new restaurant
         const newRestaurant = new Restaurant(data);
 
-        // Save the restaurant to databse
+        // Save the restaurant to databse   
         await newRestaurant.save(); 
 
         res.status(200).json({msg: "New restaurant added successfully", newRestaurant: newRestaurant});
@@ -107,70 +107,36 @@ router.get("/:id", async(req, res) => {
 });
 
 
-// Add menu items for a restaurant  (only restaurant owner)
-router.post("/:id/menu", authMiddleware, async (req, res) => {
+// Update restaurant (Admin only)
+router.put("/:id", authMiddleware, async (req, res) => {
     try {
         const restaurantId = req.params.id;
-        const data = req.body;
-        
-        // Validate if provided ID is valid as mongoose objectId
-        if(!mongoose.Types.ObjectId.isValid(restaurantId)) {
-            return res.status(400).json({msg: "Invalid restaurant ID"});
-        }
-        
-        // Check is restaurant exists
-        const restaurant = await Restaurant.findById(restaurantId);
-        
-        if(!restaurant) return res.status(404).json({msg: "Restaurant not found"});
-        
-        // Ensure only restaurant owner can add menu items
-        if(restaurant.owner.toString() !== req.user.id) {
-            return res.status(403).json({msg: "Unauthorized, Only restaurant owner can add menu items"});
-        }
-        
-        // Create new menu item
-        const newMenuItem = new MenuItem(data);
+        const updates = req.body;
 
-        // save to database
-        await newMenuItem.save();
-        
-        res.status(200).json({msg: "Menu item added successfully", menuItem: newMenuItem});
+        // Ensure only admin can update data
+        if(req.user.role !== "admin") {
+            return res.status(403).json({msg: "Unauthorized, Only can updated restaurant"});
+        }
+
+        // Find the restaurant
+        const restaurant = await Restaurant.findById(restaurantId);
+        if(!restaurant) {
+            return res.status(404).json({msg: "No restaurant found"});
+        }
+
+        // Update the restaurant
+        const updatedRestaurant = await Restaurant.findByIdAndUpdate(restaurantId, updates, {
+            new: true,
+            runValidators: true,
+        });
+
+        res.status(200).json({msg: "Restaurant updated successfully", updatedRestaurant: updatedRestaurant});
 
     } catch (error) {
-        console.log("Error adding menu items in restaurants",error);
+        console.log("Error updating restaurant", error);
         res.status(500).json({msg: "Internal server error"});
     }
 });
 
-
-// Get restaurant menu
-router.get("/:id/menu", async (req, res) => {
-    try {
-        const restaurantId = req.params.id;
-        // console.log("Restaurant ID is ", restaurantId);
-
-        // Validate if the provided ID is a valis mongoDB objectId
-        if(!mongoose.Types.ObjectId.isValid(restaurantId)) {
-            return res.status(400).json({msg: "Invalid resturant ID"});
-        }
-        
-        // Check if restaurant exist or not
-        const restaurant = await Restaurant.findById(restaurantId);
-        if(!restaurant) return res.status(404).json({msg: "No resturant found"});
-
-        // Fetch menu items for this restaurant
-        const menuItems = await MenuItem.find({ restaurantId }).lean();
-
-       if(menuItems.length === 0) {
-        return res.status(404).json({msg: "No menu items found for this resturant"});
-       }
-
-       res.status(200).json({menu: menuItems});
-
-    } catch (error) {
-        console.log("Error fetching restaurant menu", error);
-        res.status(500).json({msg: "Internal server error"});
-    }
-});
 
 module.exports = router;
