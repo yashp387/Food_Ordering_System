@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const Order = require("./../models/order");
 const Cart = require("../models/cart");
@@ -46,6 +47,60 @@ router.post("/", authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.log("Error placing order", error);
+        res.status(500).json({msg: "Internal server error"});
+    }
+});
+
+
+// Get route to view orders of user's
+router.get("/", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        if(!userId) {
+            res.status(401).json({msg: "Unauthorized, User not found"});
+        }
+
+        // Find all orders for the logged-in user and populate menu items to get their names
+        const orders = await Order.find({userId}).populate("items.menuItemId", "name price");
+
+        if(!orders || orders.length === 0) {
+            return res.status(500).json({msg: "No orders found"});
+        }
+
+        res.status(200).json({orders});
+
+    } catch (error) {
+        console.log("Error fetching user orders", error);
+        res.status(500).json({msg: "Internal server error"});
+    }
+});
+
+
+// Get orders details
+router.get("/:orderId", authMiddleware, async (req, res) => {
+    try {
+        const {orderId} = req.params;
+        const userId = req.user.id
+        
+        // Validate if provided orderId is a valid mongoose objectId
+        if(!mongoose.Types.ObjectId.isValid(orderId)) {
+            return res.status(400).json({msg: "Invalid order ID"});
+        }
+
+        // Find the order
+        const order = await Order.findOne({_id: orderId, userId})
+            .populate("items.menuItemId", "name price")
+            .populate("restaurantId", "name address");
+
+        if(!order) {
+            return res.status(404).json({msg: "Order not found"});
+        }
+
+        res.status(200).json({ order });
+        
+    } catch (error) {
+        console.log("Error fetching orders details", error);
         res.status(500).json({msg: "Internal server error"});
     }
 });
