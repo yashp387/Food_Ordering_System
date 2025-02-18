@@ -2,10 +2,10 @@ const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
 const Cart = require("./../models/cart");
+const MenuItem = require("../models/menuItem");
 const User = require("./../models/user");
 const { authMiddleware, generateToken} = require("./../middlewares/authMiddleware");
 const cartMiddleware = require("./../middlewares/cartMiddleware");
-const MenuItem = require("../models/menuItem");
 
 // POST router to add item to cart
 router.post("/", authMiddleware, cartMiddleware, async (req, res) => {

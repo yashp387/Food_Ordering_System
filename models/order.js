@@ -13,7 +13,7 @@ const orderSchema = new mongoose.Schema({
     },
     items: [
         {
-            menuId: {
+            menuItemId: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "MenuItem",
                 required: true,
@@ -28,11 +28,6 @@ const orderSchema = new mongoose.Schema({
                 min: 0,
                 required: true,
             },
-            subTotal: {
-                type: Number,
-                required: true,
-                default: 0,
-            }
         }
     ],
     total: {
@@ -55,11 +50,7 @@ const orderSchema = new mongoose.Schema({
 
 // Auto update total before saving the total
 orderSchema.pre("save", function(next) {
-    this.items.forEach((item) => {
-        item.subTotal = item.price * item.quantity;
-    });
-
-    this.total = this.items.reduce((sum, item) => sum + item.subTotal, 0);
+    this.total = this.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     next();
 });
 
