@@ -4,6 +4,7 @@ const MenuItem = require("./../models/menuItem");
 const cartMiddleware = async (req, res, next) => {
     try {
         const { menuItemId, quantity} = req.body;
+        // console.log("menuItemId from cartMiddleware",menuItemId);
 
         // Validate menuItemId
         if(!mongoose.Types.ObjectId.isValid(menuItemId)) {
@@ -11,7 +12,8 @@ const cartMiddleware = async (req, res, next) => {
         }
 
         // Validate quantity
-        if(!quantity || quantity <= 0) {
+        const numericQuantity = Number(quantity);
+        if(!numericQuantity || numericQuantity <= 0) {
             return res.status(400).json({msg: "Quantity must be greater than zero"});
         }
 
