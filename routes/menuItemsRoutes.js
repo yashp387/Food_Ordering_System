@@ -45,7 +45,7 @@ router.post("/:id/menu", authMiddleware, async (req, res) => {
 });
 
 
-// Get Restaurant menu
+// Get all menu items
 router.get("/:id/menu", async (req, res) => {
     try {
         const restaurantId = req.params.id;
@@ -59,14 +59,14 @@ router.get("/:id/menu", async (req, res) => {
         const restaurant = await Restaurant.findById(restaurantId);
 
         if(!restaurant) {
-            return res.status(404).json({msg: "No resturant found"});
+            return res.status(404).json({msg: "No restaurant found"});
         }
 
         // Fetching menu items
         const menuItems = await MenuItem.find({ restaurantId: restaurantId });
 
-        if(menuItems.length === 0) {
-            return res.status(404).json({msg: "No menu items found for this restaurant"});
+        if (!menuItems || menuItems.length === 0) {
+            return res.status(200).json({ menu: [], msg: "No menu items found for this restaurant" });
         }
 
         res.status(200).json({menu: menuItems});
@@ -139,18 +139,19 @@ router.delete("/menu/:menuItemId", authMiddleware, async (req, res) => {
         }
 
         // Find the restaurant linked to this menu item
-        const restaurant = await Restaurant.findById(menuItem.restaurantId);
+        const restaurant = await Restaurant.findById(menuItem.restaurantId).populate("owner");
 
         if(!restaurant) {
-            return res.status(404).json({msg: "No restaurant found"});
+            return res.status(404).json({msg: "Restaurant not found"});
         }
 
         // Ensure only restaurant owner can delete menu item
-        if(restaurant.owner.toString() !== req.user.id) {
-            return res.status(403).json({msg: "Unauthorized, You cannot delete this menu item"});
+        if(restaurant.owner._id.toString() !== req.user.id) {
+            return res.status(403).json({msg: "Unauthorized: You cannot delete this menu item"});
         }
 
-        await MenuItem.findByIdAndDelete(menuItemId, menuItem);
+        // Delete menu item
+        await MenuItem.findByIdAndDelete(menuItemId);
 
         res.status(200).json({msg: "Menu item deleted successfully"});
 

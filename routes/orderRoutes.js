@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const router = express.Router();
 const Order = require("./../models/order");
 const Cart = require("../models/cart");
+const User = require("../models/user");
 const { authMiddleware, generateToken} = require("./../middlewares/authMiddleware");
 
 // POST route to place order
@@ -101,6 +102,83 @@ router.get("/:orderId", authMiddleware, async (req, res) => {
         
     } catch (error) {
         console.log("Error fetching orders details", error);
+        res.status(500).json({msg: "Internal server error"});
+    }
+});
+
+
+// View all orders (admin only)
+router.get("/admin/all", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+
+        // Check if user is admin
+        if(!user || user.role !== "admin") {
+            return res.status(400).json({msg: "Access denied, Admins only"});
+        }
+
+        // Fetch all users
+        const orders = await Order.find()
+            .populate("userId", "name email")  // Get user details
+            .populate("items.menuItemId", "name price")  // GEt menu item details
+            .populate("restaurantId", "name address");   // Get restaurant details
+
+        res.status(200).json({ orders });
+
+    } catch (error) {
+        console.log("Error fetching orders", error);
+        res.status(500).json({msg: "Internal server error"});
+    }
+});
+
+
+// Update you order status (admin only)
+router.put("/admin/:id", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id
+        const orderId = req.params.id;
+        const { status, paymentStatus } = req.body;
+        
+        // Check if user is admin
+        const user = await User.findById(userId);
+        if(!user || user.role !== "admin") {
+            return res.status(400).json({msg: "Access denied, Admins only"});
+        }
+        
+        // validate orderId
+        if(!mongoose.Types.ObjectId.isValid(orderId)) {
+            return res.status(400).json({msg: "Invalid order ID"});
+        }
+
+        // Find the order
+        const order = await Order.findById(orderId);
+        if(!order) {
+            return res.status(404).json({msg: "Order not found"});
+        }
+
+        // Update the status
+        if(status) {
+            if(!["pending", "confirmed", "delivered", "preparing", "cancelled"].includes(status)) {
+                return res.status(400).json({msg: "Invalid order status"});
+            }
+            order.status = status;
+        }
+
+        // Update the paymentStatus
+        if(paymentStatus) {
+            if(!["pending", "completed", "failed"].includes(paymentStatus)) {
+                return res.status(400).json({msg: "Invalid payment status"});
+            }
+            order.paymentStatus = paymentStatus;
+        }
+
+        await order.save();
+
+        res.status(200).json({msg: "Order updated successfully", order});
+
+    } catch (error) {
+        console.log("Error updating order:", error);
         res.status(500).json({msg: "Internal server error"});
     }
 });
